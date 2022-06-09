@@ -1,2 +1,4 @@
 terraform-provider-azureopenshift
 examples/terraform.tfvars
+dist/
+examples/terraform*
