@@ -156,6 +156,20 @@ func resourceOpenShiftCluster() *schema.Resource {
 				},
 			},
 
+			"kubeadmin_username": {
+				Type:      schema.TypeString,
+				Computed:  true,
+				Optional:  true,
+				Sensitive: true,
+			},
+
+			"kubeadmin_password": {
+				Type:      schema.TypeString,
+				Computed:  true,
+				Optional:  true,
+				Sensitive: true,
+			},
+
 			"worker_profile": {
 				Type:     schema.TypeList,
 				Required: true,
@@ -460,6 +474,19 @@ func resourceOpenShiftClusterRead(d *schema.ResourceData, meta interface{}) erro
 		d.Set("console_url", props.ConsoleProfile.URL)
 	}
 
+	credResponse, err := client.ListCredentials(ctx, id.ResourceGroup, id.ManagedClusterName)
+	if err != nil {
+		if utils.ResponseWasNotFound(credResponse.Response) {
+			log.Printf("[DEBUG] Red Hat OpenShift Cluster %q:%q does not have kubeadmin username and password", id.ManagedClusterName, id.ResourceGroup)
+			return nil
+		}
+
+		return fmt.Errorf("retrieving Red Hat OpenShift Cluster Credential %q (Resource Group %q): %+v", id.ManagedClusterName, id.ResourceGroup, err)
+	} else {
+		d.Set("kubeadmin_username", credResponse.KubeadminUsername)
+		d.Set("kubeadmin_password", credResponse.KubeadminPassword)
+	}
+
 	return azure.TagsFlattenAndSet(d, resp.Tags)
 }
 
@@ -579,8 +606,9 @@ func flattenOpenShiftMasterProfile(profile *redhatopenshift.MasterProfile) []int
 
 	return []interface{}{
 		map[string]interface{}{
-			"vm_size":   profile.VMSize,
-			"subnet_id": subnetId,
+			"vm_size":            profile.VMSize,
+			"subnet_id":          subnetId,
+			"encryption_at_host": profile.EncryptionAtHost,
 		},
 	}
 }
@@ -609,6 +637,7 @@ func flattenOpenShiftWorkerProfiles(profiles *[]redhatopenshift.WorkerProfile) [
 		if result["subnet_id"] == nil && profile.SubnetID != nil {
 			result["subnet_id"] = profile.SubnetID
 		}
+		result["encryption_at_host"] = profile.EncryptionAtHost
 	}
 
 	results = append(results, result)
