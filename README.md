@@ -5,6 +5,18 @@ This is a provider to create [Azure Redhat Openshift](https://docs.microsoft.com
 
 ## Prerequistes
 
+## Authencation
+
+* Provider automatically honor Azure CLI Login credentials
+* Provider Supports Service Principal Environment varialbles
+
+    ```
+    ARM_CLIENT_ID=xxxx
+    ARM_CLIENT_SECRET=xxxx
+    ARM_SUBSCRIPTION_ID=xxxx
+    ARM_TENANT_ID=xxxx
+    ```
+
 
 ### [Create Azure network with two empty subnets](https://docs.microsoft.com/en-us/azure/openshift/tutorial-create-cluster#create-a-virtual-network-containing-two-empty-subnets)
 * Azure Resource Group
@@ -27,3 +39,4 @@ cd examples
 terraform init
 terraform apply
 ```
+

@@ -74,6 +74,8 @@ func providerConfigure(p *schema.Provider) schema.ConfigureContextFunc {
 			ClientID:                 d.Get("client_id").(string),
 			ClientSecret:             d.Get("client_secret").(string),
 			TenantID:                 d.Get("tenant_id").(string),
+			Environment:              d.Get("environment").(string),
+			MetadataHost:             d.Get("metadata_host").(string),
 			SupportsClientSecretAuth: true,
 			SupportsAzureCliToken:    true,
 		}
