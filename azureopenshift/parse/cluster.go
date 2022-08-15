@@ -3,9 +3,12 @@ package parse
 // NOTE: this file is generated via 'go:generate' - manual changes will be overwritten
 
 import (
+	"errors"
 	"fmt"
+	"regexp"
 	"strings"
 
+	"github.com/Azure/azure-sdk-for-go/profiles/latest/redhatopenshift/mgmt/redhatopenshift"
 	"github.com/rh-mobb/terraform-provider-azureopenshift/helpers/azure"
 )
 
@@ -61,4 +64,23 @@ func ClusterID(input string) (*ClusterId, error) {
 	}
 
 	return &resourceId, nil
+}
+
+//heack: we want to get load balancer name. But API does not expose that yet.
+
+func InternalClusterId(clusterName string, workerProfiles *[]redhatopenshift.WorkerProfile) (*string, error) {
+	if len(*workerProfiles) < 1 {
+		return nil, errors.New("need at least 1 worker profile to calculate internal cluster id")
+	}
+	profile := (*workerProfiles)[0]
+	es := `(` + clusterName + `)-(.+?)-.+`
+	rgx, err := regexp.Compile(es)
+	if err != nil {
+		return nil, err
+	}
+	matches := rgx.FindStringSubmatch(*profile.Name)
+	if len(matches) != 3 {
+		return nil, fmt.Errorf("can not capture the internal cluster id with cluster name %s, profile worker name %s, matches: %v", clusterName, *profile.Name, matches)
+	}
+	return &matches[2], nil
 }

@@ -175,6 +175,12 @@ func resourceOpenShiftCluster() *schema.Resource {
 				Sensitive: true,
 			},
 
+			"internal_cluster_id": {
+				Type:     schema.TypeString,
+				Computed: true,
+				Optional: true,
+			},
+
 			"worker_profile": {
 				Type:     schema.TypeList,
 				Required: true,
@@ -464,6 +470,13 @@ func resourceOpenShiftClusterRead(d *schema.ResourceData, meta interface{}) erro
 		if err := d.Set("worker_profile", workerProfiles); err != nil {
 			return fmt.Errorf("setting `worker_profile`: %+v", err)
 		}
+
+		internalClusterId, err := parse.InternalClusterId(*resp.Name, props.WorkerProfiles)
+		if err != nil {
+			return err
+		}
+
+		d.Set("internal_cluster_id", internalClusterId)
 
 		apiServerProfile := flattenOpenShiftAPIServerProfile(props.ApiserverProfile)
 		if err := d.Set("api_server_profile", apiServerProfile); err != nil {
