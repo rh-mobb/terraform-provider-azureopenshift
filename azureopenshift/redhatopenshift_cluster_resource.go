@@ -76,6 +76,11 @@ func resourceOpenShiftCluster() *schema.Resource {
 							ForceNew:     true,
 							ValidateFunc: validation.StringIsNotEmpty,
 						},
+						"resource_group_id": {
+							Type:     schema.TypeString,
+							Computed: true,
+							Optional: true,
+						},
 					},
 				},
 			},
@@ -527,10 +532,16 @@ func flattenOpenShiftClusterProfile(profile *redhatopenshift.ClusterProfile) []i
 		clusterDomain = *profile.Domain
 	}
 
+	resourceGroupId := ""
+	if profile.ResourceGroupID != nil {
+		resourceGroupId = *profile.ResourceGroupID
+	}
+
 	return []interface{}{
 		map[string]interface{}{
-			"pull_secret": pullSecret,
-			"domain":      clusterDomain,
+			"pull_secret":       pullSecret,
+			"domain":            clusterDomain,
+			"resource_group_id": resourceGroupId,
 		},
 	}
 }
