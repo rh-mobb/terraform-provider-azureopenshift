@@ -75,6 +75,7 @@ func resourceOpenShiftCluster() *schema.Resource {
 							Optional:     true,
 							ForceNew:     true,
 							ValidateFunc: validation.StringIsNotEmpty,
+							Computed:     true,
 						},
 						"resource_group_id": {
 							Type:     schema.TypeString,
@@ -446,7 +447,7 @@ func resourceOpenShiftClusterRead(d *schema.ResourceData, meta interface{}) erro
 	d.Set("location", resp.Location)
 
 	if props := resp.OpenShiftClusterProperties; props != nil {
-		clusterProfile := flattenOpenShiftClusterProfile(props.ClusterProfile)
+		clusterProfile := flattenOpenShiftClusterProfile(props.ClusterProfile, d)
 		if err := d.Set("cluster_profile", clusterProfile); err != nil {
 			return fmt.Errorf("setting `cluster_profile`: %+v", err)
 		}
@@ -530,14 +531,19 @@ func resourceOpenShiftClusterDelete(d *schema.ResourceData, meta interface{}) er
 	return nil
 }
 
-func flattenOpenShiftClusterProfile(profile *redhatopenshift.ClusterProfile) []interface{} {
+func flattenOpenShiftClusterProfile(profile *redhatopenshift.ClusterProfile, d *schema.ResourceData) []interface{} {
 	if profile == nil {
 		return []interface{}{}
 	}
 
-	pullSecret := ""
-	if profile.PullSecret != nil {
-		pullSecret = *profile.PullSecret
+	// pull secret isn't returned by the API so pass the existing value along
+	var pullSecret interface{}
+	clusterProfileRaw := d.Get("cluster_profile").([]interface{})
+	if len(clusterProfileRaw) != 0 {
+		pullSecretRaw := d.Get("cluster_profile").([]interface{})[0].(map[string]interface{})["pull_secret"]
+		if pullSecretRaw != nil {
+			pullSecret = pullSecretRaw.(string)
+		}
 	}
 
 	clusterDomain := ""
