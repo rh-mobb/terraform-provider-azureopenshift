@@ -73,7 +73,7 @@ func InternalClusterId(clusterName string, workerProfiles *[]redhatopenshift.Wor
 		return nil, errors.New("need at least 1 worker profile to calculate internal cluster id")
 	}
 	profile := (*workerProfiles)[0]
-	es := `(` + clusterName + `)-(.+?)-.+`
+	es := `(.+)-(.+?)-worker-.+`
 	rgx, err := regexp.Compile(es)
 	if err != nil {
 		return nil, err

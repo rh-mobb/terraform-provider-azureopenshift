@@ -8,8 +8,12 @@ import (
 )
 
 func TestParseInternalClusterId(t *testing.T) {
-	clusterName := "test-tf"
-	testString := "test-tf-2gk5b-worker-eastus2"
+	captureClusterId("test-tf", "test-tf-2gk5b-worker-eastus21", t)
+	captureClusterId("test-tf-001", "test-tf-001-2gk5b-worker-eastus22", t)
+	captureClusterId("aro-001-xxxx-cp4i-dev-use2", "aro-001-xxxx-cp4i-dev-2gk5b-worker-eastus21", t)
+}
+
+func captureClusterId(clusterName, testString string, t *testing.T) {
 	workerProfiles := &[]redhatopenshift.WorkerProfile{
 		{
 			Name: &testString,
