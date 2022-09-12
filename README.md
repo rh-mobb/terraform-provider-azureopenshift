@@ -8,7 +8,7 @@ This is a provider to create [Azure Redhat Openshift](https://docs.microsoft.com
 ## Authencation
 
 * Provider automatically honor Azure CLI Login credentials
-* Provider Supports Service Principal Environment varialbles
+* Provider Supports Service Principal Environment variables
 
     ```
     ARM_CLIENT_ID=xxxx
@@ -28,7 +28,7 @@ This is a provider to create [Azure Redhat Openshift](https://docs.microsoft.com
 ### Give Red Hat Openshift Resource Provider network contributor role of Azure network
 
 ```bash
-OPENSHIFT_RP_OBJECT_ID=$(az ad sp list --filter "displayname eq 'Azure Red Hat OpenShift RP'" --query "[?appDisplayName=='Azure Red Hat OpenShift RP'].objectId" --only-show-errors --output tsv)
+OPENSHIFT_RP_OBJECT_ID=$(az ad sp list --filter "displayname eq 'Azure Red Hat OpenShift RP'" --query "[?appDisplayName=='Azure Red Hat OpenShift RP'].id" --only-show-errors --output tsv)
 az role assignment create --role "Contributor" --assignee-object-id ${OPENSHIFT_RP_OBJECT_ID} --scope [NETWORK_ID]
 ```
 
