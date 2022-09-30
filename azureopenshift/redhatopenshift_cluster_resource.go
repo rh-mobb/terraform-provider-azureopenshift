@@ -239,6 +239,10 @@ func resourceOpenShiftCluster() *schema.Resource {
 							ForceNew: true,
 							Default:  APIPublic,
 						},
+						"url": {
+							Type:     schema.TypeString,
+							Computed: true,
+						},
 					},
 				},
 			},
@@ -683,6 +687,7 @@ func flattenOpenShiftAPIServerProfile(profile *redhatopenshift.APIServerProfile)
 	return []interface{}{
 		map[string]interface{}{
 			"visibility": string(profile.Visibility),
+			"url":        string(*profile.URL),
 		},
 	}
 }
