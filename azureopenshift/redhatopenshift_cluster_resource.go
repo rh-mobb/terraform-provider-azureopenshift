@@ -20,10 +20,6 @@ import (
 	"github.com/rh-mobb/terraform-provider-azureopenshift/helpers/validate"
 )
 
-var (
-	randomDomainName = GenerateRandomDomainName()
-)
-
 const (
 	// APIPrivate ...
 	APIPrivate string = "Private"
@@ -710,6 +706,7 @@ func flattenOpenShiftIngressProfiles(profiles *[]redhatopenshift.IngressProfile)
 }
 
 func expandOpenshiftClusterProfile(input []interface{}, subscriptionId string) *redhatopenshift.ClusterProfile {
+	randomDomainName := GenerateRandomDomainName()
 	resourceGroupName := fmt.Sprintf("aro-%s", randomDomainName)
 	resourceGroupId := ResourceGroupID(subscriptionId, resourceGroupName)
 
