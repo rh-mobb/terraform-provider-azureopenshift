@@ -13,6 +13,7 @@ import (
 	"github.com/rh-mobb/terraform-provider-azureopenshift/azureopenshift/clients"
 	"github.com/rh-mobb/terraform-provider-azureopenshift/azureopenshift/parse"
 	openShiftValidate "github.com/rh-mobb/terraform-provider-azureopenshift/azureopenshift/validate"
+	"github.com/rh-mobb/terraform-provider-azureopenshift/helpers/aro"
 	"github.com/rh-mobb/terraform-provider-azureopenshift/helpers/azure"
 	"github.com/rh-mobb/terraform-provider-azureopenshift/helpers/suppress"
 	"github.com/rh-mobb/terraform-provider-azureopenshift/helpers/tf"
@@ -53,6 +54,12 @@ func resourceOpenShiftCluster() *schema.Resource {
 			"location": commonschema.Location(),
 
 			"resource_group_name": commonschema.ResourceGroupName(),
+
+			"cluster_resource_group": {
+				Type:         schema.TypeString,
+				Optional:     true,
+				ValidateFunc: validation.StringIsNotEmpty,
+			},
 
 			"cluster_profile": {
 				Type:     schema.TypeList,
@@ -309,7 +316,8 @@ func resourceOpenShiftClusterCreate(d *schema.ResourceData, meta interface{}) er
 	location := d.Get("location").(string)
 
 	clusterProfileRaw := d.Get("cluster_profile").([]interface{})
-	clusterProfile := expandOpenshiftClusterProfile(clusterProfileRaw, subscriptionId)
+	clusterResourceGroup := d.Get("cluster_resource_group").(string)
+	clusterProfile := aro.NewClusterProfileHelper(subscriptionId, clusterResourceGroup).Expand(clusterProfileRaw)
 
 	consoleProfile := &redhatopenshift.ConsoleProfile{}
 
@@ -379,9 +387,7 @@ func resourceOpenShiftClusterUpdate(d *schema.ResourceData, meta interface{}) er
 
 	log.Printf("[INFO] preparing arguments for Red Hat OpenShift Cluster update.")
 
-	resourceGroupName := d.Get("resource_group_name").(string)
 	subscriptionId := client.SubscriptionID
-	resourceGroupId := ResourceGroupID(subscriptionId, resourceGroupName)
 
 	id, err := parse.ClusterID(d.Id())
 	if err != nil {
@@ -400,7 +406,8 @@ func resourceOpenShiftClusterUpdate(d *schema.ResourceData, meta interface{}) er
 
 	if d.HasChange("cluster_profile") {
 		clusterProfileRaw := d.Get("cluster_profile").([]interface{})
-		clusterProfile := expandOpenshiftClusterProfile(clusterProfileRaw, resourceGroupId)
+		clusterResourceGroup := d.Get("cluster_resource_group").(string)
+		clusterProfile := aro.NewClusterProfileHelper(subscriptionId, clusterResourceGroup).Expand(clusterProfileRaw)
 		existing.OpenShiftClusterProperties.ClusterProfile = clusterProfile
 	}
 
@@ -703,36 +710,6 @@ func flattenOpenShiftIngressProfiles(profiles *[]redhatopenshift.IngressProfile)
 	}
 
 	return results
-}
-
-func expandOpenshiftClusterProfile(input []interface{}, subscriptionId string) *redhatopenshift.ClusterProfile {
-	randomDomainName := GenerateRandomDomainName()
-	resourceGroupName := fmt.Sprintf("aro-%s", randomDomainName)
-	resourceGroupId := ResourceGroupID(subscriptionId, resourceGroupName)
-
-	if len(input) == 0 {
-		return &redhatopenshift.ClusterProfile{
-			ResourceGroupID:      utils.String(resourceGroupId),
-			Domain:               utils.String(randomDomainName),
-			FipsValidatedModules: redhatopenshift.FipsValidatedModulesDisabled,
-		}
-	}
-
-	config := input[0].(map[string]interface{})
-
-	pullSecret := config["pull_secret"].(string)
-
-	domain := config["domain"].(string)
-	if domain == "" {
-		domain = randomDomainName
-	}
-
-	return &redhatopenshift.ClusterProfile{
-		ResourceGroupID:      utils.String(resourceGroupId),
-		Domain:               utils.String(domain),
-		PullSecret:           utils.String(pullSecret),
-		FipsValidatedModules: redhatopenshift.FipsValidatedModulesDisabled,
-	}
 }
 
 func expandOpenshiftServicePrincipalProfile(input []interface{}) *redhatopenshift.ServicePrincipalProfile {
