@@ -3,6 +3,7 @@ package aro_test
 import (
 	"strings"
 
+	"github.com/Azure/azure-sdk-for-go/profiles/latest/redhatopenshift/mgmt/redhatopenshift"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	"github.com/rh-mobb/terraform-provider-azureopenshift/helpers/aro"
@@ -22,8 +23,9 @@ var _ = Describe("Cluster Test", func() {
 		cluster_resource_group = ""
 		input = []interface{}{
 			map[string]interface{}{
-				"pull_secret": expectedPullSecret,
-				"domain":      domain,
+				"pull_secret":            expectedPullSecret,
+				"domain":                 domain,
+				"fips_validated_modules": "Enabled",
 			},
 		}
 		subscription_id = "123456"
@@ -64,6 +66,13 @@ var _ = Describe("Cluster Test", func() {
 		It("Should return resource group id with resource group name", func() {
 			cp := cph.Expand(input)
 			Ω(*cp.ResourceGroupID).Should(Equal("/subscriptions/123456/resourceGroups/custom_resource_group"))
+		})
+	})
+
+	Context("When fips validated module is enabled", func() {
+		It("Should return enabled", func() {
+			cp := cph.Expand(input)
+			Ω(cp.FipsValidatedModules).Should(Equal(redhatopenshift.FipsValidatedModulesEnabled))
 		})
 	})
 })

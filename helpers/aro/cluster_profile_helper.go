@@ -43,6 +43,8 @@ func (cpe *ClusterProfileHelper) Expand(input []interface{}) *redhatopenshift.Cl
 
 	pullSecret := config["pull_secret"].(string)
 
+	fipsValidatedModules := config["fips_validated_modules"].(string)
+
 	domain := config["domain"].(string)
 	if domain == "" {
 		domain = randomDomainName
@@ -52,7 +54,7 @@ func (cpe *ClusterProfileHelper) Expand(input []interface{}) *redhatopenshift.Cl
 		ResourceGroupID:      utils.String(resourceGroupId),
 		Domain:               utils.String(domain),
 		PullSecret:           utils.String(pullSecret),
-		FipsValidatedModules: redhatopenshift.FipsValidatedModulesDisabled,
+		FipsValidatedModules: redhatopenshift.FipsValidatedModules(fipsValidatedModules),
 	}
 }
 
