@@ -5,7 +5,7 @@ This is a provider to create [Azure Redhat Openshift](https://docs.microsoft.com
 
 ## Prerequistes
 
-## Authencation
+### Authencation
 
 * Provider automatically honor Azure CLI Login credentials
 * Provider Supports Service Principal Environment varialbles
@@ -29,14 +29,41 @@ This is a provider to create [Azure Redhat Openshift](https://docs.microsoft.com
 
 ```bash
 OPENSHIFT_RP_OBJECT_ID=$(az ad sp list --filter "displayname eq 'Azure Red Hat OpenShift RP'" --query "[?appDisplayName=='Azure Red Hat OpenShift RP'].objectId" --only-show-errors --output tsv)
-az role assignment create --role "Contributor" --assignee-object-id ${OPENSHIFT_RP_OBJECT_ID} --scope [NETWORK_ID]
+az role assignment create --role "Network Contributor" --assignee-object-id ${OPENSHIFT_RP_OBJECT_ID} --scope [NETWORK_ID]
 ```
 
-## Test sample configuration
+## Example Usage
 
 ```bash
-cd examples
-terraform init
-terraform apply
+terraform {
+  required_providers {
+    azureopenshift = {
+      source  = "rh-mobb/azureopenshift"
+      version = "~> 0.0.10"
+    }
+  }
+}
+
+provider azureopenshift {
+}
+
+resource "azureopenshift_redhatopenshift_cluster" "test" {
+  name                = "tf-openshift"
+  location            = var.location
+  resource_group_name = var.resource_group_name
+
+  master_profile {
+    subnet_id = var.master_subnet_id
+  }
+
+  worker_profile {
+    subnet_id = var.worker_subnet_id
+  }
+
+  service_principal {
+    client_id     = var.client_id
+    client_secret = var.client_secret
+  }
+}
 ```
 

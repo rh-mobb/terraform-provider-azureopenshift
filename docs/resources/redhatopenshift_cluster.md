@@ -28,7 +28,11 @@ description: |-
 
 - `api_server_profile` (Block List, Max: 1) (see [below for nested schema](#nestedblock--api_server_profile))
 - `cluster_profile` (Block List, Max: 1) (see [below for nested schema](#nestedblock--cluster_profile))
+- `cluster_resource_group` (String)
 - `ingress_profile` (Block List, Max: 1) (see [below for nested schema](#nestedblock--ingress_profile))
+- `internal_cluster_id` (String)
+- `kubeadmin_password` (String, Sensitive)
+- `kubeadmin_username` (String, Sensitive)
 - `network_profile` (Block List, Max: 1) (see [below for nested schema](#nestedblock--network_profile))
 - `tags` (Map of String)
 - `timeouts` (Block, Optional) (see [below for nested schema](#nestedblock--timeouts))
@@ -83,6 +87,10 @@ Optional:
 
 - `visibility` (String)
 
+Read-Only:
+
+- `url` (String)
+
 
 <a id="nestedblock--cluster_profile"></a>
 ### Nested Schema for `cluster_profile`
@@ -90,7 +98,9 @@ Optional:
 Optional:
 
 - `domain` (String)
+- `fips_validated_modules` (String)
 - `pull_secret` (String)
+- `resource_group_id` (String)
 
 
 <a id="nestedblock--ingress_profile"></a>
