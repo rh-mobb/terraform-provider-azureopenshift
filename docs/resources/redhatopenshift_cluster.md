@@ -52,6 +52,7 @@ Required:
 
 Optional:
 
+- `disk_encryption_set` (String)
 - `encryption_at_host` (String)
 - `vm_size` (String)
 
@@ -74,6 +75,7 @@ Required:
 
 Optional:
 
+- `disk_encryption_set` (String)
 - `disk_size_gb` (Number)
 - `encryption_at_host` (String)
 - `node_count` (Number)

@@ -167,6 +167,10 @@ func resourceOpenShiftCluster() *schema.Resource {
 							Default:      redhatopenshift.EncryptionAtHostDisabled,
 							ValidateFunc: validation.StringIsNotEmpty,
 						},
+						"disk_encryption_set": {
+							Type:     schema.TypeString,
+							Optional: true,
+						},
 					},
 				},
 			},
@@ -229,6 +233,10 @@ func resourceOpenShiftCluster() *schema.Resource {
 							Optional:     true,
 							Default:      redhatopenshift.EncryptionAtHostDisabled,
 							ValidateFunc: validation.StringIsNotEmpty,
+						},
+						"disk_encryption_set": {
+							Type:     schema.TypeString,
+							Optional: true,
 						},
 					},
 				},
@@ -650,9 +658,10 @@ func flattenOpenShiftMasterProfile(profile *redhatopenshift.MasterProfile) []int
 
 	return []interface{}{
 		map[string]interface{}{
-			"vm_size":            profile.VMSize,
-			"subnet_id":          subnetId,
-			"encryption_at_host": profile.EncryptionAtHost,
+			"vm_size":             profile.VMSize,
+			"subnet_id":           subnetId,
+			"disk_encryption_set": profile.DiskEncryptionSetID,
+			"encryption_at_host":  profile.EncryptionAtHost,
 		},
 	}
 }
@@ -680,6 +689,9 @@ func flattenOpenShiftWorkerProfiles(profiles *[]redhatopenshift.WorkerProfile) [
 
 		if result["subnet_id"] == nil && profile.SubnetID != nil {
 			result["subnet_id"] = profile.SubnetID
+		}
+		if result["disk_encryption_set"] == nil && profile.DiskEncryptionSetID != nil {
+			result["disk_encryption_set"] = profile.DiskEncryptionSetID
 		}
 		result["encryption_at_host"] = profile.EncryptionAtHost
 	}
@@ -765,10 +777,16 @@ func expandOpenshiftMasterProfile(input []interface{}) *redhatopenshift.MasterPr
 	subnetId := config["subnet_id"].(string)
 	encryptionAtHost := config["encryption_at_host"].(string)
 
+	var diskEncryptionSetId *string
+	if config["disk_encryption_set"] != nil {
+		diskEncryptionSetId = utils.String(config["disk_encryption_set"].(string))
+	}
+
 	return &redhatopenshift.MasterProfile{
-		VMSize:           utils.String(vmSize),
-		SubnetID:         utils.String(subnetId),
-		EncryptionAtHost: redhatopenshift.EncryptionAtHost(encryptionAtHost),
+		VMSize:              utils.String(vmSize),
+		SubnetID:            utils.String(subnetId),
+		EncryptionAtHost:    redhatopenshift.EncryptionAtHost(encryptionAtHost),
+		DiskEncryptionSetID: diskEncryptionSetId,
 	}
 }
 
@@ -800,14 +818,19 @@ func expandOpenshiftWorkerProfiles(inputs []interface{}) *[]redhatopenshift.Work
 
 	subnetId := config["subnet_id"].(string)
 	encryptionAtHost := config["encryption_at_host"].(string)
+	var diskEncryptionSetId *string
+	if config["disk_encryption_set"] != nil {
+		diskEncryptionSetId = utils.String(config["disk_encryption_set"].(string))
+	}
 
 	profile := redhatopenshift.WorkerProfile{
-		Name:             utils.String(workerName),
-		VMSize:           utils.String(vmSize),
-		DiskSizeGB:       utils.Int32(diskSizeGb),
-		SubnetID:         utils.String(subnetId),
-		Count:            utils.Int32(nodeCount),
-		EncryptionAtHost: redhatopenshift.EncryptionAtHost(encryptionAtHost),
+		Name:                utils.String(workerName),
+		VMSize:              utils.String(vmSize),
+		DiskSizeGB:          utils.Int32(diskSizeGb),
+		SubnetID:            utils.String(subnetId),
+		Count:               utils.Int32(nodeCount),
+		EncryptionAtHost:    redhatopenshift.EncryptionAtHost(encryptionAtHost),
+		DiskEncryptionSetID: diskEncryptionSetId,
 	}
 
 	profiles = append(profiles, profile)
