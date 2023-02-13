@@ -18,3 +18,14 @@ func base64IsEncoded(data string) bool {
 	_, err := base64.StdEncoding.DecodeString(data)
 	return err == nil
 }
+
+// Base64DecodeIfEncoded decodes data if the input is base64 encoded using
+// base64.StdEncoding.EncodeToString. If the input is not base64 encoded,
+// return the original input unchanged.
+func Base64DecodeIfEncoded(data string) string {
+	if base64IsEncoded(data) {
+		decodedPullSecret, _ := base64.StdEncoding.DecodeString(data)
+		return string(decodedPullSecret)
+	}
+	return data
+}

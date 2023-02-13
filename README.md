@@ -60,6 +60,10 @@ resource "azureopenshift_redhatopenshift_cluster" "test" {
     subnet_id = var.worker_subnet_id
   }
 
+  cluster_profile {
+    pull_secret = filebase64(var.pull_secret_file)
+  }
+
   service_principal {
     client_id     = var.client_id
     client_secret = var.client_secret

@@ -53,7 +53,7 @@ func (cpe *ClusterProfileHelper) Expand(input []interface{}) *redhatopenshift.Cl
 	return &redhatopenshift.ClusterProfile{
 		ResourceGroupID:      utils.String(resourceGroupId),
 		Domain:               utils.String(domain),
-		PullSecret:           utils.String(pullSecret),
+		PullSecret:           utils.String(utils.Base64DecodeIfEncoded(pullSecret)),
 		FipsValidatedModules: redhatopenshift.FipsValidatedModules(fipsValidatedModules),
 	}
 }
