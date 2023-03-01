@@ -645,10 +645,16 @@ func flattenOpenShiftNetworkProfile(profile *redhatopenshift.NetworkProfile) []i
 		serviceCidr = *profile.ServiceCidr
 	}
 
+	SDNType := ""
+	if profile.SDNType != nil {
+		SDNType = *profile.SDNType
+	}
+
 	return []interface{}{
 		map[string]interface{}{
-			"pod_cidr":     podCidr,
-			"service_cidr": serviceCidr,
+			"pod_cidr":                 podCidr,
+			"service_cidr":             serviceCidr,
+			"software_defined_network": SDNType,
 		},
 	}
 }
@@ -759,6 +765,7 @@ func expandOpenshiftNetworkProfile(input []interface{}) *redhatopenshift.Network
 		return &redhatopenshift.NetworkProfile{
 			PodCidr:     utils.String("10.128.0.0/14"),
 			ServiceCidr: utils.String("172.30.0.0/16"),
+			SDNType:     utils.String("OpenShiftSDN"),
 		}
 	}
 
@@ -766,10 +773,12 @@ func expandOpenshiftNetworkProfile(input []interface{}) *redhatopenshift.Network
 
 	podCidr := config["pod_cidr"].(string)
 	serviceCidr := config["service_cidr"].(string)
+	SDNType := config["software_defined_network"].(string)
 
 	return &redhatopenshift.NetworkProfile{
 		PodCidr:     utils.String(podCidr),
 		ServiceCidr: utils.String(serviceCidr),
+		SDNType:     utils.String(SDNType),
 	}
 }
 

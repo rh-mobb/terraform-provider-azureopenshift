@@ -120,7 +120,7 @@ Optional:
 
 - `pod_cidr` (String)
 - `service_cidr` (String)
-
+- `software_defined_network` (String)
 
 <a id="nestedblock--timeouts"></a>
 ### Nested Schema for `timeouts`
