@@ -138,6 +138,13 @@ func resourceOpenShiftCluster() *schema.Resource {
 							Default:      "172.30.0.0/16",
 							ValidateFunc: validate.CIDR,
 						},
+						"software_defined_network": {
+							Type:         schema.TypeString,
+							Optional:     true,
+							ForceNew:     true,
+							Default:      "OpenShiftSDN",
+							ValidateFunc: openShiftValidate.SDNType,
+						},
 					},
 				},
 			},
