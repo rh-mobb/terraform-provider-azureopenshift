@@ -36,6 +36,7 @@ func (cpe *ClusterProfileHelper) Expand(input []interface{}) *redhatopenshift.Cl
 			ResourceGroupID:      utils.String(resourceGroupId),
 			Domain:               utils.String(randomDomainName),
 			FipsValidatedModules: redhatopenshift.FipsValidatedModulesDisabled,
+			Version: redhatopenshift.VersionDefault
 		}
 	}
 
@@ -50,11 +51,14 @@ func (cpe *ClusterProfileHelper) Expand(input []interface{}) *redhatopenshift.Cl
 		domain = randomDomainName
 	}
 
+	version := config["version"].(string)
+
 	return &redhatopenshift.ClusterProfile{
 		ResourceGroupID:      utils.String(resourceGroupId),
 		Domain:               utils.String(domain),
 		PullSecret:           utils.String(pullSecret),
 		FipsValidatedModules: redhatopenshift.FipsValidatedModules(fipsValidatedModules),
+		Version:              utils.String(version),
 	}
 }
 

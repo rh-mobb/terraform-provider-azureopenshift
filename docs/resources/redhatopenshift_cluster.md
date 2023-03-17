@@ -103,6 +103,7 @@ Optional:
 - `fips_validated_modules` (String)
 - `pull_secret` (String)
 - `resource_group_id` (String)
+- `version` (String)
 
 
 <a id="nestedblock--ingress_profile"></a>

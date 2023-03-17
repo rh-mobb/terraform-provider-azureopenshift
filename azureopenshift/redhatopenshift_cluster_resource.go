@@ -91,6 +91,11 @@ func resourceOpenShiftCluster() *schema.Resource {
 							Default:      redhatopenshift.FipsValidatedModulesDisabled,
 							ValidateFunc: validation.StringIsNotEmpty,
 						},
+						"version": {
+							Type: schema.TypeString,
+							ForceNew: true,
+							Optional: true
+						},
 					},
 				},
 			},
@@ -583,6 +588,7 @@ func flattenOpenShiftClusterProfile(profile *redhatopenshift.ClusterProfile, d *
 			"domain":                 clusterDomain,
 			"resource_group_id":      resourceGroupId,
 			"fips_validated_modules": profile.FipsValidatedModules,
+			"version": profile.Version,
 		},
 	}
 }
