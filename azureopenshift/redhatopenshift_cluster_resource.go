@@ -28,6 +28,8 @@ const (
 	APIPublic     string = "Public"
 	StandardD8sV3 string = "Standard_D8s_v3"
 	StandardD4sV3 string = "Standard_D4s_v3"
+	// Version ...
+	VersionDefault string = "4.11.31"
 )
 
 func resourceOpenShiftCluster() *schema.Resource {
@@ -79,6 +81,13 @@ func resourceOpenShiftCluster() *schema.Resource {
 							ForceNew:     true,
 							ValidateFunc: validation.StringIsNotEmpty,
 							Computed:     true,
+						},
+						"version": {
+							Type:         schema.TypeString,
+							Optional:     true,
+							ValidateFunc: validation.StringIsNotEmpty,
+							Computed:     true,
+							// Default:      VersionDefault,
 						},
 						"resource_group_id": {
 							Type:     schema.TypeString,
@@ -559,11 +568,18 @@ func flattenOpenShiftClusterProfile(profile *redhatopenshift.ClusterProfile, d *
 
 	// pull secret isn't returned by the API so pass the existing value along
 	var pullSecret interface{}
+
+	var version interface{}
 	clusterProfileRaw := d.Get("cluster_profile").([]interface{})
 	if len(clusterProfileRaw) != 0 {
 		pullSecretRaw := d.Get("cluster_profile").([]interface{})[0].(map[string]interface{})["pull_secret"]
 		if pullSecretRaw != nil {
 			pullSecret = pullSecretRaw.(string)
+		}
+
+		versionRaw := d.Get("cluster_profile").([]interface{})[0].(map[string]interface{})["version"]
+		if versionRaw != nil {
+			version = versionRaw.(string)
 		}
 	}
 
@@ -583,6 +599,7 @@ func flattenOpenShiftClusterProfile(profile *redhatopenshift.ClusterProfile, d *
 			"domain":                 clusterDomain,
 			"resource_group_id":      resourceGroupId,
 			"fips_validated_modules": profile.FipsValidatedModules,
+			"version":                version,
 		},
 	}
 }
