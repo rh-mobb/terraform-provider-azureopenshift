@@ -28,8 +28,6 @@ const (
 	APIPublic     string = "Public"
 	StandardD8sV3 string = "Standard_D8s_v3"
 	StandardD4sV3 string = "Standard_D4s_v3"
-	// Version ...
-	VersionDefault string = "4.11.31"
 )
 
 func resourceOpenShiftCluster() *schema.Resource {
@@ -87,7 +85,6 @@ func resourceOpenShiftCluster() *schema.Resource {
 							Optional:     true,
 							ValidateFunc: validation.StringIsNotEmpty,
 							Computed:     true,
-							// Default:      VersionDefault,
 						},
 						"resource_group_id": {
 							Type:     schema.TypeString,
