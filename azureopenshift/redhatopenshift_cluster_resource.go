@@ -266,6 +266,10 @@ func resourceOpenShiftCluster() *schema.Resource {
 							Type:     schema.TypeString,
 							Computed: true,
 						},
+						"ip": {
+							Type:     schema.TypeString,
+							Computed: true,
+						},
 					},
 				},
 			},
@@ -283,6 +287,10 @@ func resourceOpenShiftCluster() *schema.Resource {
 							Optional: true,
 							ForceNew: true,
 							Default:  redhatopenshift.VisibilityPublic,
+						},
+						"ip": {
+							Type:     schema.TypeString,
+							Computed: true,
 						},
 					},
 				},
@@ -724,6 +732,7 @@ func flattenOpenShiftAPIServerProfile(profile *redhatopenshift.APIServerProfile)
 		map[string]interface{}{
 			"visibility": string(profile.Visibility),
 			"url":        string(*profile.URL),
+			"ip":         string(*profile.IP),
 		},
 	}
 }
@@ -738,6 +747,7 @@ func flattenOpenShiftIngressProfiles(profiles *[]redhatopenshift.IngressProfile)
 	for _, profile := range *profiles {
 		result := make(map[string]interface{})
 		result["visibility"] = string(profile.Visibility)
+		result["ip"] = string(*profile.IP)
 
 		results = append(results, result)
 	}
