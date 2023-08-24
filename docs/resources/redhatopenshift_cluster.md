@@ -41,7 +41,7 @@ description: |-
 
 - `console_url` (String)
 - `id` (String) The ID of this resource.
-- `version` (String)
+
 
 <a id="nestedblock--master_profile"></a>
 ### Nested Schema for `master_profile`
