@@ -17,7 +17,7 @@ description: |-
 
 ### Required
 
-- `location` (String)
+- `location` (String) (Region to create the cluster. See [reference](https://azure.microsoft.com/en-us/explore/global-infrastructure/products-by-region/?products=openshift))
 - `master_profile` (Block List, Min: 1, Max: 1) (see [below for nested schema](#nestedblock--master_profile))
 - `name` (String)
 - `resource_group_name` (String)
@@ -28,9 +28,9 @@ description: |-
 
 - `api_server_profile` (Block List, Max: 1) (see [below for nested schema](#nestedblock--api_server_profile))
 - `cluster_profile` (Block List, Max: 1) (see [below for nested schema](#nestedblock--cluster_profile))
-- `cluster_resource_group` (String)
+- `cluster_resource_group` (String) (Name for the managed resources' RG. OpenShift will create this RG)
 - `ingress_profile` (Block List, Max: 1) (see [below for nested schema](#nestedblock--ingress_profile))
-- `internal_cluster_id` (String)
+- `internal_cluster_id` (String) (5-digit string appended to resources inside the managed Resource Group)
 - `kubeadmin_password` (String, Sensitive)
 - `kubeadmin_username` (String, Sensitive)
 - `network_profile` (Block List, Max: 1) (see [below for nested schema](#nestedblock--network_profile))
@@ -41,7 +41,6 @@ description: |-
 
 - `console_url` (String)
 - `id` (String) The ID of this resource.
-
 
 <a id="nestedblock--master_profile"></a>
 ### Nested Schema for `master_profile`
@@ -126,11 +125,21 @@ Optional:
 <a id="nestedblock--timeouts"></a>
 ### Nested Schema for `timeouts`
 
+This allows you to specify [timeouts](https://developer.hashicorp.com/terraform/language/resources#timeouts) for certain actions:
+
 Optional:
 
-- `create` (String)
-- `delete` (String)
-- `read` (String)
-- `update` (String)
+- `create` (String) (Defaults to 90 minutes)
+- `delete` (String) (Defaults to 90 minutes)
+- `read` (String) (Defaults to 5 minutes)
+- `update` (String) (Defaults to 90 minutes)
 
+<a id="attributes"></a>
+## Attributes Reference
+
+The following attributes are exported:
+
+- `id` (String) (Cluster's Azure Resource ID)
+- `console_url` (String) (Cluster's URL)
+- `version` (String) (The cluster's version)
 
