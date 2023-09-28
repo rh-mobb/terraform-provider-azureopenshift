@@ -5,7 +5,8 @@ import (
 	"math/rand"
 	"time"
 
-	"github.com/Azure/azure-sdk-for-go/profiles/latest/redhatopenshift/mgmt/redhatopenshift"
+	"github.com/Azure/azure-sdk-for-go/sdk/azcore/to"
+	redhatopenshift "github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/redhatopenshift/armredhatopenshift"
 	"github.com/rh-mobb/terraform-provider-azureopenshift/helpers/utils"
 )
 
@@ -35,7 +36,7 @@ func (cpe *ClusterProfileHelper) Expand(input []interface{}) *redhatopenshift.Cl
 		return &redhatopenshift.ClusterProfile{
 			ResourceGroupID:      utils.String(resourceGroupId),
 			Domain:               utils.String(randomDomainName),
-			FipsValidatedModules: redhatopenshift.FipsValidatedModulesDisabled,
+			FipsValidatedModules: to.Ptr(redhatopenshift.FipsValidatedModulesDisabled),
 		}
 	}
 
@@ -57,7 +58,7 @@ func (cpe *ClusterProfileHelper) Expand(input []interface{}) *redhatopenshift.Cl
 		Domain:               utils.String(domain),
 		PullSecret:           utils.String(pullSecret),
 		Version:              utils.String(version),
-		FipsValidatedModules: redhatopenshift.FipsValidatedModules(fipsValidatedModules),
+		FipsValidatedModules: to.Ptr(redhatopenshift.FipsValidatedModules(fipsValidatedModules)),
 	}
 }
 

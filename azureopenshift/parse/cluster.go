@@ -8,7 +8,7 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/Azure/azure-sdk-for-go/profiles/latest/redhatopenshift/mgmt/redhatopenshift"
+	redhatopenshift "github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/redhatopenshift/armredhatopenshift"
 	"github.com/rh-mobb/terraform-provider-azureopenshift/helpers/azure"
 )
 
@@ -68,11 +68,11 @@ func ClusterID(input string) (*ClusterId, error) {
 
 //heack: we want to get load balancer name. But API does not expose that yet.
 
-func InternalClusterId(clusterName string, workerProfiles *[]redhatopenshift.WorkerProfile) (*string, error) {
-	if len(*workerProfiles) < 1 {
+func InternalClusterId(clusterName string, workerProfiles []*redhatopenshift.WorkerProfile) (*string, error) {
+	if len(workerProfiles) < 1 {
 		return nil, errors.New("need at least 1 worker profile to calculate internal cluster id")
 	}
-	profile := (*workerProfiles)[0]
+	profile := (workerProfiles)[0]
 	es := `(.+)-(.+?)-worker-.+`
 	rgx, err := regexp.Compile(es)
 	if err != nil {

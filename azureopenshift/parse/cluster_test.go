@@ -3,7 +3,7 @@ package parse_test
 import (
 	"testing"
 
-	"github.com/Azure/azure-sdk-for-go/profiles/latest/redhatopenshift/mgmt/redhatopenshift"
+	redhatopenshift "github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/redhatopenshift/armredhatopenshift"
 	"github.com/rh-mobb/terraform-provider-azureopenshift/azureopenshift/parse"
 )
 
