@@ -37,6 +37,11 @@ description: |-
 - `tags` (Map of String)
 - `timeouts` (Block, Optional) (see [below for nested schema](#nestedblock--timeouts))
 
+### Read-Only
+
+- `console_url` (String)
+- `id` (String) The ID of this resource.
+
 <a id="nestedblock--master_profile"></a>
 ### Nested Schema for `master_profile`
 
