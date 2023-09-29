@@ -146,6 +146,13 @@ func resourceOpenShiftCluster() *schema.Resource {
 							Default:      "172.30.0.0/16",
 							ValidateFunc: validate.CIDR,
 						},
+						"outbound_type": {
+							Type:         schema.TypeString,
+							Optional:     true,
+							ForceNew:     true,
+							Default:      redhatopenshift.OutboundTypeLoadbalancer,
+							ValidateFunc: validate.ValidateOutBoundType,
+						},
 					},
 				},
 			},
@@ -652,10 +659,16 @@ func flattenOpenShiftNetworkProfile(profile *redhatopenshift.NetworkProfile) []i
 		serviceCidr = *profile.ServiceCidr
 	}
 
+	var outboundType *redhatopenshift.OutboundType
+	if profile.OutboundType != nil {
+		outboundType = profile.OutboundType
+	}
+
 	return []interface{}{
 		map[string]interface{}{
-			"pod_cidr":     podCidr,
-			"service_cidr": serviceCidr,
+			"pod_cidr":      podCidr,
+			"service_cidr":  serviceCidr,
+			"outbound_type": outboundType,
 		},
 	}
 }
@@ -766,8 +779,9 @@ func expandOpenshiftServicePrincipalProfile(input []interface{}) *redhatopenshif
 func expandOpenshiftNetworkProfile(input []interface{}) *redhatopenshift.NetworkProfile {
 	if len(input) == 0 {
 		return &redhatopenshift.NetworkProfile{
-			PodCidr:     utils.String("10.128.0.0/14"),
-			ServiceCidr: utils.String("172.30.0.0/16"),
+			PodCidr:      utils.String("10.128.0.0/14"),
+			ServiceCidr:  utils.String("172.30.0.0/16"),
+			OutboundType: to.Ptr(redhatopenshift.OutboundTypeLoadbalancer),
 		}
 	}
 
@@ -775,10 +789,12 @@ func expandOpenshiftNetworkProfile(input []interface{}) *redhatopenshift.Network
 
 	podCidr := config["pod_cidr"].(string)
 	serviceCidr := config["service_cidr"].(string)
+	outboundType := config["outbound_type"].(string)
 
 	return &redhatopenshift.NetworkProfile{
-		PodCidr:     utils.String(podCidr),
-		ServiceCidr: utils.String(serviceCidr),
+		PodCidr:      utils.String(podCidr),
+		ServiceCidr:  utils.String(serviceCidr),
+		OutboundType: to.Ptr(redhatopenshift.OutboundType(outboundType)),
 	}
 }
 

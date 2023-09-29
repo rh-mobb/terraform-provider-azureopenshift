@@ -14,7 +14,7 @@ func TestParseInternalClusterId(t *testing.T) {
 }
 
 func captureClusterId(clusterName, testString string, t *testing.T) {
-	workerProfiles := &[]redhatopenshift.WorkerProfile{
+	workerProfiles := []*redhatopenshift.WorkerProfile{
 		{
 			Name: &testString,
 		},
