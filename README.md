@@ -7,6 +7,20 @@ This is a provider to create [Azure Redhat Openshift](https://docs.microsoft.com
 
 ### Authencation
 
+* Subscripition id is required at Provider Level
+
+    ```
+    provider azureopenshift {
+      subscription_id = "xxxx"
+    }
+    ```
+
+    User can configure subscription id through environment variable
+
+    ```
+    ARM_SUBSCRIPTION_ID=xxxx
+    ```
+
 * Provider automatically honor Azure CLI Login credentials
 * Provider Supports Service Principal Environment varialbles
 

@@ -70,3 +70,15 @@ func validatePortNumber(i interface{}, k string, allowZero bool) (warnings []str
 
 	return warnings, errors
 }
+
+func ValidateOutBoundType(i interface{}, k string) (warnings []string, errors []error) {
+	v, ok := i.(string)
+	if !ok {
+		errors = append(errors, fmt.Errorf("expected type of %q to be string", k))
+		return
+	}
+	if v != "Loadbalancer" && v != "UserDefinedRouting" {
+		errors = append(errors, fmt.Errorf("%q is not a valid value: %s, the accept values are LoadBalancer or UserDefinedRouting", k, v))
+	}
+	return warnings, errors
+}

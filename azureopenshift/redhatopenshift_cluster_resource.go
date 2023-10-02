@@ -6,7 +6,9 @@ import (
 	"log"
 	"time"
 
-	"github.com/Azure/azure-sdk-for-go/services/redhatopenshift/mgmt/2022-04-01/redhatopenshift"
+	"github.com/Azure/azure-sdk-for-go/sdk/azcore"
+	"github.com/Azure/azure-sdk-for-go/sdk/azcore/to"
+	redhatopenshift "github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/redhatopenshift/armredhatopenshift"
 	"github.com/hashicorp/go-azure-helpers/resourcemanager/commonschema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
@@ -143,6 +145,13 @@ func resourceOpenShiftCluster() *schema.Resource {
 							ForceNew:     true,
 							Default:      "172.30.0.0/16",
 							ValidateFunc: validate.CIDR,
+						},
+						"outbound_type": {
+							Type:         schema.TypeString,
+							Optional:     true,
+							ForceNew:     true,
+							Default:      redhatopenshift.OutboundTypeLoadbalancer,
+							ValidateFunc: validate.ValidateOutBoundType,
 						},
 					},
 				},
@@ -326,13 +335,14 @@ func resourceOpenShiftClusterCreate(d *schema.ResourceData, meta interface{}) er
 	log.Printf("[INFO] preparing arguments for Red Hat Openshift Cluster create.")
 
 	resourceGroupName := d.Get("resource_group_name").(string)
-	subscriptionId := client.SubscriptionID
+	subscriptionId := meta.(*clients.Client).SubscriptionID
 
 	name := d.Get("name").(string)
 
-	existing, err := client.Get(ctx, resourceGroupName, name)
+	existing, err := client.Get(ctx, resourceGroupName, name, nil)
 	if err != nil {
-		if !utils.ResponseWasNotFound(existing.Response) {
+		responseError, ok := err.(*azcore.ResponseError)
+		if !ok || responseError.StatusCode != 404 {
 			return fmt.Errorf("checking for presence of existing Red Hat Openshift Cluster %q (Resource Group %q): %s", name, resourceGroupName, err)
 		}
 	}
@@ -372,7 +382,7 @@ func resourceOpenShiftClusterCreate(d *schema.ResourceData, meta interface{}) er
 	parameters := redhatopenshift.OpenShiftCluster{
 		Name:     &name,
 		Location: &location,
-		OpenShiftClusterProperties: &redhatopenshift.OpenShiftClusterProperties{
+		Properties: &redhatopenshift.OpenShiftClusterProperties{
 			ClusterProfile:          clusterProfile,
 			ConsoleProfile:          consoleProfile,
 			ServicePrincipalProfile: servicePrincipalProfile,
@@ -385,16 +395,16 @@ func resourceOpenShiftClusterCreate(d *schema.ResourceData, meta interface{}) er
 		Tags: azure.TagsExpand(t),
 	}
 
-	future, err := client.CreateOrUpdate(ctx, resourceGroupName, name, parameters)
+	future, err := client.BeginCreateOrUpdate(ctx, resourceGroupName, name, parameters, nil)
 	if err != nil {
 		return fmt.Errorf("creating Red Hat OpenShift Cluster %q (Resource Group %q): %+v", name, resourceGroupName, err)
 	}
 
-	if err = future.WaitForCompletionRef(ctx, client.Client); err != nil {
+	if _, err = future.PollUntilDone(ctx, nil); err != nil {
 		return fmt.Errorf("waiting for creation of Red Hat OpenShift Cluster %q (Resource Group %q): %+v", name, resourceGroupName, err)
 	}
 
-	read, err := client.Get(ctx, resourceGroupName, name)
+	read, err := client.Get(ctx, resourceGroupName, name, nil)
 	if err != nil {
 		return fmt.Errorf("retrieving Red Hat OpenShift Cluster %q (Resource Group %q): %+v", name, resourceGroupName, err)
 	}
@@ -415,7 +425,7 @@ func resourceOpenShiftClusterUpdate(d *schema.ResourceData, meta interface{}) er
 
 	log.Printf("[INFO] preparing arguments for Red Hat OpenShift Cluster update.")
 
-	subscriptionId := client.SubscriptionID
+	subscriptionId := meta.(*clients.Client).SubscriptionID
 
 	id, err := parse.ClusterID(d.Id())
 	if err != nil {
@@ -424,11 +434,11 @@ func resourceOpenShiftClusterUpdate(d *schema.ResourceData, meta interface{}) er
 
 	d.Partial(true)
 
-	existing, err := client.Get(ctx, id.ResourceGroup, id.ManagedClusterName)
+	existing, err := client.Get(ctx, id.ResourceGroup, id.ManagedClusterName, nil)
 	if err != nil {
 		return fmt.Errorf("retrieving existing Red Hat OpenShift Cluster %q (Resource Group %q): %+v", id.ManagedClusterName, id.ResourceGroup, err)
 	}
-	if existing.OpenShiftClusterProperties == nil {
+	if existing.Properties == nil {
 		return fmt.Errorf("retrieving existing Red Hat OpenShift Cluster %q (Resource Group %q): `properties` was nil", id.ManagedClusterName, id.ResourceGroup)
 	}
 
@@ -436,19 +446,19 @@ func resourceOpenShiftClusterUpdate(d *schema.ResourceData, meta interface{}) er
 		clusterProfileRaw := d.Get("cluster_profile").([]interface{})
 		clusterResourceGroup := d.Get("cluster_resource_group").(string)
 		clusterProfile := aro.NewClusterProfileHelper(subscriptionId, clusterResourceGroup).Expand(clusterProfileRaw)
-		existing.OpenShiftClusterProperties.ClusterProfile = clusterProfile
+		existing.Properties.ClusterProfile = clusterProfile
 	}
 
 	if d.HasChange("master_profile") {
 		masterProfileRaw := d.Get("master_profile").([]interface{})
 		masterProfile := expandOpenshiftMasterProfile(masterProfileRaw)
-		existing.OpenShiftClusterProperties.MasterProfile = masterProfile
+		existing.Properties.MasterProfile = masterProfile
 	}
 
 	if d.HasChange("worker_profile") {
 		workerProfilesRaw := d.Get("worker_profile").([]interface{})
 		workerProfiles := expandOpenshiftWorkerProfiles(workerProfilesRaw)
-		existing.OpenShiftClusterProperties.WorkerProfiles = workerProfiles
+		existing.Properties.WorkerProfiles = workerProfiles
 	}
 
 	d.Partial(false)
@@ -466,14 +476,8 @@ func resourceOpenShiftClusterRead(d *schema.ResourceData, meta interface{}) erro
 		return err
 	}
 
-	resp, err := client.Get(ctx, id.ResourceGroup, id.ManagedClusterName)
+	resp, err := client.Get(ctx, id.ResourceGroup, id.ManagedClusterName, nil)
 	if err != nil {
-		if utils.ResponseWasNotFound(resp.Response) {
-			log.Printf("[DEBUG] Red Hat OpenShift Cluster %q was not found in Resource Group %q - removing from state!", id.ManagedClusterName, id.ResourceGroup)
-			d.SetId("")
-			return nil
-		}
-
 		return fmt.Errorf("retrieving Red Hat OpenShift Cluster %q (Resource Group %q): %+v", id.ManagedClusterName, id.ResourceGroup, err)
 	}
 
@@ -481,7 +485,7 @@ func resourceOpenShiftClusterRead(d *schema.ResourceData, meta interface{}) erro
 	d.Set("resource_group_name", id.ResourceGroup)
 	d.Set("location", resp.Location)
 
-	if props := resp.OpenShiftClusterProperties; props != nil {
+	if props := resp.Properties; props != nil {
 		clusterProfile := flattenOpenShiftClusterProfile(props.ClusterProfile, d)
 		if err := d.Set("cluster_profile", clusterProfile); err != nil {
 			return fmt.Errorf("setting `cluster_profile`: %+v", err)
@@ -528,13 +532,8 @@ func resourceOpenShiftClusterRead(d *schema.ResourceData, meta interface{}) erro
 		d.Set("console_url", props.ConsoleProfile.URL)
 	}
 
-	credResponse, err := client.ListCredentials(ctx, id.ResourceGroup, id.ManagedClusterName)
+	credResponse, err := client.ListCredentials(ctx, id.ResourceGroup, id.ManagedClusterName, nil)
 	if err != nil {
-		if utils.ResponseWasNotFound(credResponse.Response) {
-			log.Printf("[DEBUG] Red Hat OpenShift Cluster %q:%q does not have kubeadmin username and password", id.ManagedClusterName, id.ResourceGroup)
-			return nil
-		}
-
 		return fmt.Errorf("retrieving Red Hat OpenShift Cluster Credential %q (Resource Group %q): %+v", id.ManagedClusterName, id.ResourceGroup, err)
 	} else {
 		d.Set("kubeadmin_username", credResponse.KubeadminUsername)
@@ -554,12 +553,12 @@ func resourceOpenShiftClusterDelete(d *schema.ResourceData, meta interface{}) er
 		return err
 	}
 
-	future, err := client.Delete(ctx, id.ResourceGroup, id.ManagedClusterName)
+	future, err := client.BeginDelete(ctx, id.ResourceGroup, id.ManagedClusterName, nil)
 	if err != nil {
 		return fmt.Errorf("deleting Red Hat Openshift Cluster %q (Resource Group %q): %+v", id.ManagedClusterName, id.ResourceGroup, err)
 	}
 
-	if err := future.WaitForCompletionRef(ctx, client.Client); err != nil {
+	if _, err := future.PollUntilDone(ctx, nil); err != nil {
 		return fmt.Errorf("waiting for the deletion of Red Hat Openshift Cluster %q (Resource Group %q): %+v", id.ManagedClusterName, id.ResourceGroup, err)
 	}
 
@@ -660,10 +659,16 @@ func flattenOpenShiftNetworkProfile(profile *redhatopenshift.NetworkProfile) []i
 		serviceCidr = *profile.ServiceCidr
 	}
 
+	var outboundType *redhatopenshift.OutboundType
+	if profile.OutboundType != nil {
+		outboundType = profile.OutboundType
+	}
+
 	return []interface{}{
 		map[string]interface{}{
-			"pod_cidr":     podCidr,
-			"service_cidr": serviceCidr,
+			"pod_cidr":      podCidr,
+			"service_cidr":  serviceCidr,
+			"outbound_type": outboundType,
 		},
 	}
 }
@@ -688,7 +693,7 @@ func flattenOpenShiftMasterProfile(profile *redhatopenshift.MasterProfile) []int
 	}
 }
 
-func flattenOpenShiftWorkerProfiles(profiles *[]redhatopenshift.WorkerProfile) []interface{} {
+func flattenOpenShiftWorkerProfiles(profiles []*redhatopenshift.WorkerProfile) []interface{} {
 	if profiles == nil {
 		return []interface{}{}
 	}
@@ -696,9 +701,9 @@ func flattenOpenShiftWorkerProfiles(profiles *[]redhatopenshift.WorkerProfile) [
 	results := make([]interface{}, 0)
 
 	result := make(map[string]interface{})
-	result["node_count"] = int32(len(*profiles))
+	result["node_count"] = int32(len(profiles))
 
-	for _, profile := range *profiles {
+	for _, profile := range profiles {
 		if result["disk_size_gb"] == nil && profile.DiskSizeGB != nil {
 			result["disk_size_gb"] = profile.DiskSizeGB
 		}
@@ -730,23 +735,23 @@ func flattenOpenShiftAPIServerProfile(profile *redhatopenshift.APIServerProfile)
 
 	return []interface{}{
 		map[string]interface{}{
-			"visibility": string(profile.Visibility),
+			"visibility": string(*profile.Visibility),
 			"url":        string(*profile.URL),
 			"ip":         string(*profile.IP),
 		},
 	}
 }
 
-func flattenOpenShiftIngressProfiles(profiles *[]redhatopenshift.IngressProfile) []interface{} {
+func flattenOpenShiftIngressProfiles(profiles []*redhatopenshift.IngressProfile) []interface{} {
 	if profiles == nil {
 		return []interface{}{}
 	}
 
 	results := make([]interface{}, 0)
 
-	for _, profile := range *profiles {
+	for _, profile := range profiles {
 		result := make(map[string]interface{})
-		result["visibility"] = string(profile.Visibility)
+		result["visibility"] = string(*profile.Visibility)
 		result["ip"] = string(*profile.IP)
 
 		results = append(results, result)
@@ -774,8 +779,9 @@ func expandOpenshiftServicePrincipalProfile(input []interface{}) *redhatopenshif
 func expandOpenshiftNetworkProfile(input []interface{}) *redhatopenshift.NetworkProfile {
 	if len(input) == 0 {
 		return &redhatopenshift.NetworkProfile{
-			PodCidr:     utils.String("10.128.0.0/14"),
-			ServiceCidr: utils.String("172.30.0.0/16"),
+			PodCidr:      utils.String("10.128.0.0/14"),
+			ServiceCidr:  utils.String("172.30.0.0/16"),
+			OutboundType: to.Ptr(redhatopenshift.OutboundTypeLoadbalancer),
 		}
 	}
 
@@ -783,10 +789,12 @@ func expandOpenshiftNetworkProfile(input []interface{}) *redhatopenshift.Network
 
 	podCidr := config["pod_cidr"].(string)
 	serviceCidr := config["service_cidr"].(string)
+	outboundType := config["outbound_type"].(string)
 
 	return &redhatopenshift.NetworkProfile{
-		PodCidr:     utils.String(podCidr),
-		ServiceCidr: utils.String(serviceCidr),
+		PodCidr:      utils.String(podCidr),
+		ServiceCidr:  utils.String(serviceCidr),
+		OutboundType: to.Ptr(redhatopenshift.OutboundType(outboundType)),
 	}
 }
 
@@ -809,17 +817,17 @@ func expandOpenshiftMasterProfile(input []interface{}) *redhatopenshift.MasterPr
 	return &redhatopenshift.MasterProfile{
 		VMSize:              utils.String(vmSize),
 		SubnetID:            utils.String(subnetId),
-		EncryptionAtHost:    redhatopenshift.EncryptionAtHost(encryptionAtHost),
+		EncryptionAtHost:    to.Ptr(redhatopenshift.EncryptionAtHost(encryptionAtHost)),
 		DiskEncryptionSetID: diskEncryptionSetId,
 	}
 }
 
-func expandOpenshiftWorkerProfiles(inputs []interface{}) *[]redhatopenshift.WorkerProfile {
+func expandOpenshiftWorkerProfiles(inputs []interface{}) []*redhatopenshift.WorkerProfile {
 	if len(inputs) == 0 {
 		return nil
 	}
 
-	profiles := make([]redhatopenshift.WorkerProfile, 0)
+	profiles := make([]*redhatopenshift.WorkerProfile, 0)
 	config := inputs[0].(map[string]interface{})
 
 	// Hardcoded name required by ARO interface
@@ -847,25 +855,25 @@ func expandOpenshiftWorkerProfiles(inputs []interface{}) *[]redhatopenshift.Work
 		diskEncryptionSetId = utils.String(config["disk_encryption_set"].(string))
 	}
 
-	profile := redhatopenshift.WorkerProfile{
+	profile := &redhatopenshift.WorkerProfile{
 		Name:                utils.String(workerName),
 		VMSize:              utils.String(vmSize),
 		DiskSizeGB:          utils.Int32(diskSizeGb),
 		SubnetID:            utils.String(subnetId),
 		Count:               utils.Int32(nodeCount),
-		EncryptionAtHost:    redhatopenshift.EncryptionAtHost(encryptionAtHost),
+		EncryptionAtHost:    to.Ptr(redhatopenshift.EncryptionAtHost(encryptionAtHost)),
 		DiskEncryptionSetID: diskEncryptionSetId,
 	}
 
 	profiles = append(profiles, profile)
 
-	return &profiles
+	return profiles
 }
 
 func expandOpenshiftApiServerProfile(input []interface{}) *redhatopenshift.APIServerProfile {
 	if len(input) == 0 {
 		return &redhatopenshift.APIServerProfile{
-			Visibility: redhatopenshift.Visibility(APIPublic),
+			Visibility: to.Ptr(redhatopenshift.Visibility(APIPublic)),
 		}
 	}
 	config := input[0].(map[string]interface{})
@@ -873,12 +881,12 @@ func expandOpenshiftApiServerProfile(input []interface{}) *redhatopenshift.APISe
 	visibility := config["visibility"].(string)
 
 	return &redhatopenshift.APIServerProfile{
-		Visibility: redhatopenshift.Visibility(visibility),
+		Visibility: to.Ptr(redhatopenshift.Visibility(visibility)),
 	}
 }
 
-func expandOpenshiftIngressProfiles(inputs []interface{}) *[]redhatopenshift.IngressProfile {
-	profiles := make([]redhatopenshift.IngressProfile, 0)
+func expandOpenshiftIngressProfiles(inputs []interface{}) []*redhatopenshift.IngressProfile {
+	profiles := make([]*redhatopenshift.IngressProfile, 0)
 
 	name := utils.String("default")
 	visibility := string(redhatopenshift.VisibilityPublic)
@@ -888,12 +896,12 @@ func expandOpenshiftIngressProfiles(inputs []interface{}) *[]redhatopenshift.Ing
 		visibility = input["visibility"].(string)
 	}
 
-	profile := redhatopenshift.IngressProfile{
+	profile := &redhatopenshift.IngressProfile{
 		Name:       name,
-		Visibility: redhatopenshift.Visibility(visibility),
+		Visibility: to.Ptr(redhatopenshift.Visibility(visibility)),
 	}
 
 	profiles = append(profiles, profile)
 
-	return &profiles
+	return profiles
 }

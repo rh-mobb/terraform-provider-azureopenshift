@@ -3,7 +3,7 @@ package aro_test
 import (
 	"strings"
 
-	"github.com/Azure/azure-sdk-for-go/profiles/latest/redhatopenshift/mgmt/redhatopenshift"
+	redhatopenshift "github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/redhatopenshift/armredhatopenshift"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	"github.com/rh-mobb/terraform-provider-azureopenshift/helpers/aro"
@@ -25,6 +25,7 @@ var _ = Describe("Cluster Test", func() {
 			map[string]interface{}{
 				"pull_secret":            expectedPullSecret,
 				"domain":                 domain,
+				"version":                "4.11.1",
 				"fips_validated_modules": "Enabled",
 			},
 		}
@@ -72,7 +73,7 @@ var _ = Describe("Cluster Test", func() {
 	Context("When fips validated module is enabled", func() {
 		It("Should return enabled", func() {
 			cp := cph.Expand(input)
-			Ω(cp.FipsValidatedModules).Should(Equal(redhatopenshift.FipsValidatedModulesEnabled))
+			Ω(*cp.FipsValidatedModules).Should(Equal(redhatopenshift.FipsValidatedModulesEnabled))
 		})
 	})
 })
