@@ -120,6 +120,7 @@ Optional:
 
 - `pod_cidr` (String)
 - `service_cidr` (String)
+- `outbound_type` (String) (Either Loadbalancer or UserDefinedRouting)
 
 
 <a id="nestedblock--timeouts"></a>
