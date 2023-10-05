@@ -478,7 +478,10 @@ func resourceOpenShiftClusterRead(d *schema.ResourceData, meta interface{}) erro
 
 	resp, err := client.Get(ctx, id.ResourceGroup, id.ManagedClusterName, nil)
 	if err != nil {
-		return fmt.Errorf("retrieving Red Hat OpenShift Cluster %q (Resource Group %q): %+v", id.ManagedClusterName, id.ResourceGroup, err)
+		responseError, ok := err.(*azcore.ResponseError)
+		if !ok || responseError.StatusCode != 404 {
+			return fmt.Errorf("checking for presence of existing Red Hat Openshift Cluster %q (Resource Group %q): %s", id.ManagedClusterName, id.ResourceGroup, err)
+		}
 	}
 
 	d.Set("name", resp.Name)
@@ -534,7 +537,10 @@ func resourceOpenShiftClusterRead(d *schema.ResourceData, meta interface{}) erro
 
 	credResponse, err := client.ListCredentials(ctx, id.ResourceGroup, id.ManagedClusterName, nil)
 	if err != nil {
-		return fmt.Errorf("retrieving Red Hat OpenShift Cluster Credential %q (Resource Group %q): %+v", id.ManagedClusterName, id.ResourceGroup, err)
+		responseError, ok := err.(*azcore.ResponseError)
+		if !ok || responseError.StatusCode != 404 {
+			return fmt.Errorf("checking for presence of existing Red Hat Openshift Cluster %q (Resource Group %q): %s", id.ManagedClusterName, id.ResourceGroup, err)
+		}
 	} else {
 		d.Set("kubeadmin_username", credResponse.KubeadminUsername)
 		d.Set("kubeadmin_password", credResponse.KubeadminPassword)
