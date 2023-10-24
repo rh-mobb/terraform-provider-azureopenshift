@@ -9,6 +9,7 @@ import (
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore"
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/policy"
 	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
+	"github.com/hashicorp/go-azure-sdk/sdk/environments"
 )
 
 const (
@@ -20,6 +21,7 @@ type Config struct {
 	TenantId       string
 	ClientId       string
 	ClientSecret   string
+	Environment    environments.Environment
 }
 
 type DefaultAroCredential struct {

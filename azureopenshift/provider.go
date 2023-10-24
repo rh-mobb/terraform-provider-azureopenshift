@@ -2,7 +2,9 @@ package azureopenshift
 
 import (
 	"context"
+	"fmt"
 
+	"github.com/hashicorp/go-azure-sdk/sdk/environments"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
@@ -42,6 +44,19 @@ func Provider() *schema.Provider {
 				DefaultFunc: schema.EnvDefaultFunc("ARM_TENANT_ID", ""),
 				Description: "The Tenant ID which should be used.",
 			},
+
+			"environment": {
+				Type:        schema.TypeString,
+				Required:    true,
+				DefaultFunc: schema.EnvDefaultFunc("ARM_ENVIRONMENT", "public"),
+				Description: "The Cloud Environment which should be used. Possible values are public, usgovernment, and china. Defaults to public.",
+			},
+			"metadata_host": {
+				Type:        schema.TypeString,
+				Required:    true,
+				DefaultFunc: schema.EnvDefaultFunc("ARM_METADATA_HOSTNAME", ""),
+				Description: "The Hostname which should be used for the Azure Metadata Service.",
+			},
 		},
 
 		ResourcesMap: map[string]*schema.Resource{
@@ -59,11 +74,29 @@ func providerConfigure(p *schema.Provider) schema.ConfigureContextFunc {
 		if !ok {
 			stopCtx = ctx
 		}
+
+		var (
+			env *environments.Environment
+
+			envName      = d.Get("environment").(string)
+			metadataHost = d.Get("metadata_host").(string)
+		)
+
+		var err error
+		if metadataHost != "" {
+			if env, err = environments.FromEndpoint(ctx, fmt.Sprintf("https://%s", metadataHost), envName); err != nil {
+				return nil, diag.FromErr(err)
+			}
+		} else if env, err = environments.FromName(envName); err != nil {
+			return nil, diag.FromErr(err)
+		}
+
 		config := auth.Config{
 			SubscriptionId: d.Get("subscription_id").(string),
 			TenantId:       d.Get("tenant_id").(string),
 			ClientSecret:   d.Get("client_secret").(string),
 			ClientId:       d.Get("client_id").(string),
+			Environment:    *env,
 		}
 		client, err := clients.NewClient(stopCtx, config)
 		if err != nil {
