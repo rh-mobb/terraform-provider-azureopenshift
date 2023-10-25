@@ -7,13 +7,17 @@ import (
 	"strings"
 
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore"
+	"github.com/Azure/azure-sdk-for-go/sdk/azcore/cloud"
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/policy"
 	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
-	"github.com/hashicorp/go-azure-sdk/sdk/environments"
 )
 
 const (
 	credNameAzureCLI = "AroCLICredential"
+
+	AzurePublicString       = "public"
+	AzureUSGovernmentString = "usgovernment"
+	AzureChinaString        = "china"
 )
 
 type Config struct {
@@ -21,7 +25,7 @@ type Config struct {
 	TenantId       string
 	ClientId       string
 	ClientSecret   string
-	Environment    environments.Environment
+	Environment    string
 }
 
 type DefaultAroCredential struct {
@@ -32,7 +36,13 @@ func NewDefaultAroCredential(config Config) (*DefaultAroCredential, error) {
 	var creds []azcore.TokenCredential
 	var errorMessages []string
 
-	clientSecretCred, err := azidentity.NewClientSecretCredential(config.TenantId, config.ClientId, config.ClientSecret, nil)
+	options := &azidentity.ClientSecretCredentialOptions{
+		ClientOptions: azcore.ClientOptions{
+			Cloud: getCloud(config),
+		},
+	}
+
+	clientSecretCred, err := azidentity.NewClientSecretCredential(config.TenantId, config.ClientId, config.ClientSecret, options)
 	if err == nil {
 		creds = append(creds, clientSecretCred)
 	} else {
@@ -75,4 +85,15 @@ func defaultAroCredentialConstructorErrorHandler(numberOfSuccessfulCredentials i
 	}
 
 	return nil
+}
+
+func getCloud(config Config) cloud.Configuration {
+	switch config.Environment {
+	case AzureChinaString:
+		return cloud.AzureChina
+	case AzureUSGovernmentString:
+		return cloud.AzureGovernment
+	default:
+		return cloud.AzurePublic
+	}
 }
