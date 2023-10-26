@@ -2,9 +2,7 @@ package auth
 
 import (
 	"context"
-	"errors"
-	"log"
-	"strings"
+	"fmt"
 
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore"
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/cloud"
@@ -13,8 +11,6 @@ import (
 )
 
 const (
-	credNameAzureCLI = "AroCLICredential"
-
 	AzurePublicString       = "public"
 	AzureUSGovernmentString = "usgovernment"
 
@@ -31,38 +27,38 @@ type Config struct {
 }
 
 type DefaultAroCredential struct {
-	chain *azidentity.ChainedTokenCredential
+	chain   *azidentity.ChainedTokenCredential
+	options *azidentity.ClientSecretCredentialOptions
 }
 
 func NewDefaultAroCredential(config Config) (*DefaultAroCredential, error) {
-	var errorMessages []string
-
-	options := &azidentity.ClientSecretCredentialOptions{
-		ClientOptions: GetOptions(config),
+	// create the credential with the options pointed to the appropriate selected cloud
+	cred := &DefaultAroCredential{
+		options: &azidentity.ClientSecretCredentialOptions{
+			ClientOptions: policy.ClientOptions{
+				Cloud: getCloud(config),
+			},
+		},
 	}
 
-	clientSecretCred, err := azidentity.NewClientSecretCredential(config.TenantId, config.ClientId, config.ClientSecret, options)
+	clientSecretCred, err := azidentity.NewClientSecretCredential(config.TenantId, config.ClientId, config.ClientSecret, cred.options)
 	if err != nil {
-		errorMessages = append(errorMessages, "AroClientSecretCredential: "+err.Error())
+		return cred, fmt.Errorf("AroClientSecretCredential: %w", err)
 	}
 
 	cliCred, err := azidentity.NewAzureCLICredential(nil)
 	if err != nil {
-		errorMessages = append(errorMessages, "AroCLICredential: "+err.Error())
+		return cred, fmt.Errorf("AroCLICredential: %w", err)
 	}
 
-	creds := []azcore.TokenCredential{clientSecretCred, cliCred}
-
-	err = defaultAroCredentialConstructorErrorHandler(len(creds), errorMessages)
+	chain, err := azidentity.NewChainedTokenCredential([]azcore.TokenCredential{clientSecretCred, cliCred}, nil)
 	if err != nil {
 		return nil, err
 	}
 
-	chain, err := azidentity.NewChainedTokenCredential(creds, nil)
-	if err != nil {
-		return nil, err
-	}
-	return &DefaultAroCredential{chain: chain}, nil
+	cred.chain = chain
+
+	return cred, nil
 }
 
 // GetToken requests an access token from Azure Active Directory. This method is called automatically by Azure SDK clients.
@@ -70,28 +66,24 @@ func (c *DefaultAroCredential) GetToken(ctx context.Context, opts policy.TokenRe
 	return c.chain.GetToken(ctx, opts)
 }
 
-func defaultAroCredentialConstructorErrorHandler(numberOfSuccessfulCredentials int, errorMessages []string) (err error) {
-	errorMessage := strings.Join(errorMessages, "\n\t")
-
-	if numberOfSuccessfulCredentials == 0 {
-		return errors.New(errorMessage)
+// GetClientOptions returns the options as set on the credential.  It is used to pass in consistent options to other providers
+// e.g. ARO when creating the individual service requests.
+func (c *DefaultAroCredential) GetClientOptions() *policy.ClientOptions {
+	if c.options == nil {
+		return nil
 	}
 
-	if len(errorMessages) != 0 {
-		log.Printf("NewDefaultAroCredential failed to initialize some credentials:\n\t%s", errorMessage)
-	}
-
-	return nil
+	return &c.options.ClientOptions
 }
 
-func GetOptions(config Config) policy.ClientOptions {
+func getCloud(config Config) cloud.Configuration {
 	switch config.Environment {
 	// TODO: remove China support for now until ARO supports it.
 	// case AzureChinaString:
 	// 	return cloud.AzureChina
 	case AzureUSGovernmentString:
-		return policy.ClientOptions{Cloud: cloud.AzureGovernment}
+		return cloud.AzureGovernment
 	default:
-		return policy.ClientOptions{Cloud: cloud.AzurePublic}
+		return cloud.AzurePublic
 	}
 }

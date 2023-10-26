@@ -21,8 +21,7 @@ func NewClient(stopCtx context.Context, config auth.Config) (*Client, error) {
 		return nil, err
 	}
 
-	options := &armpolicy.ClientOptions{}
-	options.ClientOptions = auth.GetOptions(config)
+	options := &armpolicy.ClientOptions{ClientOptions: *cred.GetClientOptions()}
 
 	openshiftClustersClient, err := redhatopenshift.NewOpenShiftClustersClient(config.SubscriptionId, cred, options)
 	if err != nil {
