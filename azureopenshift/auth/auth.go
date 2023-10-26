@@ -35,28 +35,23 @@ type DefaultAroCredential struct {
 }
 
 func NewDefaultAroCredential(config Config) (*DefaultAroCredential, error) {
-	var creds []azcore.TokenCredential
 	var errorMessages []string
 
 	options := &azidentity.ClientSecretCredentialOptions{
-		ClientOptions: azcore.ClientOptions{
-			Cloud: getCloud(config),
-		},
+		ClientOptions: GetOptions(config),
 	}
 
 	clientSecretCred, err := azidentity.NewClientSecretCredential(config.TenantId, config.ClientId, config.ClientSecret, options)
-	if err == nil {
-		creds = append(creds, clientSecretCred)
-	} else {
+	if err != nil {
 		errorMessages = append(errorMessages, "AroClientSecretCredential: "+err.Error())
 	}
 
 	cliCred, err := azidentity.NewAzureCLICredential(nil)
-	if err == nil {
-		creds = append(creds, cliCred)
-	} else {
+	if err != nil {
 		errorMessages = append(errorMessages, "AroCLICredential: "+err.Error())
 	}
+
+	creds := []azcore.TokenCredential{clientSecretCred, cliCred}
 
 	err = defaultAroCredentialConstructorErrorHandler(len(creds), errorMessages)
 	if err != nil {
@@ -89,14 +84,14 @@ func defaultAroCredentialConstructorErrorHandler(numberOfSuccessfulCredentials i
 	return nil
 }
 
-func getCloud(config Config) cloud.Configuration {
+func GetOptions(config Config) policy.ClientOptions {
 	switch config.Environment {
 	// TODO: remove China support for now until ARO supports it.
 	// case AzureChinaString:
 	// 	return cloud.AzureChina
 	case AzureUSGovernmentString:
-		return cloud.AzureGovernment
+		return policy.ClientOptions{Cloud: cloud.AzureGovernment}
 	default:
-		return cloud.AzurePublic
+		return policy.ClientOptions{Cloud: cloud.AzurePublic}
 	}
 }
