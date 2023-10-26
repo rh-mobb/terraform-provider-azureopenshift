@@ -17,7 +17,9 @@ const (
 
 	AzurePublicString       = "public"
 	AzureUSGovernmentString = "usgovernment"
-	AzureChinaString        = "china"
+
+	// TODO: remove China support for now until ARO supports it.
+	// AzureChinaString        = "china"
 )
 
 type Config struct {
@@ -89,8 +91,9 @@ func defaultAroCredentialConstructorErrorHandler(numberOfSuccessfulCredentials i
 
 func getCloud(config Config) cloud.Configuration {
 	switch config.Environment {
-	case AzureChinaString:
-		return cloud.AzureChina
+	// TODO: remove China support for now until ARO supports it.
+	// case AzureChinaString:
+	// 	return cloud.AzureChina
 	case AzureUSGovernmentString:
 		return cloud.AzureGovernment
 	default:

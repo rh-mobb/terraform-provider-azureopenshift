@@ -44,11 +44,14 @@ func Provider() *schema.Provider {
 			},
 
 			"environment": {
-				Type:         schema.TypeString,
-				Required:     true,
-				DefaultFunc:  schema.EnvDefaultFunc("ARM_ENVIRONMENT", "public"),
-				Description:  "The Cloud Environment which should be used. Possible values are public, usgovernment, and china. Defaults to public.",
-				ValidateFunc: validation.StringInSlice([]string{auth.AzurePublicString, auth.AzureUSGovernmentString, auth.AzureChinaString}, false),
+				Type:        schema.TypeString,
+				Required:    true,
+				DefaultFunc: schema.EnvDefaultFunc("ARM_ENVIRONMENT", "public"),
+				// TODO: remove China support for now until ARO supports it.
+				// Description:  "The Cloud Environment which should be used. Possible values are public, usgovernment, and china. Defaults to public.",
+				// ValidateFunc: validation.StringInSlice([]string{auth.AzurePublicString, auth.AzureUSGovernmentString, auth.AzureChinaString}, false),
+				Description:  "The Cloud Environment which should be used. Possible values are public and usgovernment. Defaults to public.",
+				ValidateFunc: validation.StringInSlice([]string{auth.AzurePublicString, auth.AzureUSGovernmentString}, false),
 			},
 		},
 
