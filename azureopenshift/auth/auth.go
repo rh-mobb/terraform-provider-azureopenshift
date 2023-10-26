@@ -2,7 +2,9 @@ package auth
 
 import (
 	"context"
-	"fmt"
+	"errors"
+	"log"
+	"strings"
 
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore"
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/cloud"
@@ -32,6 +34,9 @@ type DefaultAroCredential struct {
 }
 
 func NewDefaultAroCredential(config Config) (*DefaultAroCredential, error) {
+	var creds []azcore.TokenCredential
+	var errorMessages []string
+
 	// create the credential with the options pointed to the appropriate selected cloud
 	cred := &DefaultAroCredential{
 		options: &azidentity.ClientSecretCredentialOptions{
@@ -42,13 +47,21 @@ func NewDefaultAroCredential(config Config) (*DefaultAroCredential, error) {
 	}
 
 	clientSecretCred, err := azidentity.NewClientSecretCredential(config.TenantId, config.ClientId, config.ClientSecret, cred.options)
-	if err != nil {
-		return cred, fmt.Errorf("AroClientSecretCredential: %w", err)
+	if err == nil {
+		creds = append(creds, clientSecretCred)
+	} else {
+		errorMessages = append(errorMessages, "AroClientSecretCredential: "+err.Error())
 	}
 
 	cliCred, err := azidentity.NewAzureCLICredential(nil)
-	if err != nil {
-		return cred, fmt.Errorf("AroCLICredential: %w", err)
+	if err == nil {
+		creds = append(creds, cliCred)
+	} else {
+		errorMessages = append(errorMessages, "AroCLICredential: "+err.Error())
+	}
+
+	if err := defaultAroCredentialConstructorErrorHandler(len(creds), errorMessages); err != nil {
+		return nil, err
 	}
 
 	chain, err := azidentity.NewChainedTokenCredential([]azcore.TokenCredential{clientSecretCred, cliCred}, nil)
@@ -74,6 +87,20 @@ func (c *DefaultAroCredential) GetClientOptions() *policy.ClientOptions {
 	}
 
 	return &c.options.ClientOptions
+}
+
+func defaultAroCredentialConstructorErrorHandler(numberOfSuccessfulCredentials int, errorMessages []string) (err error) {
+	errorMessage := strings.Join(errorMessages, "\n\t")
+
+	if numberOfSuccessfulCredentials == 0 {
+		return errors.New(errorMessage)
+	}
+
+	if len(errorMessages) != 0 {
+		log.Printf("NewDefaultAroCredential failed to initialize some credentials:\n\t%s", errorMessage)
+	}
+
+	return nil
 }
 
 func getCloud(config Config) cloud.Configuration {
