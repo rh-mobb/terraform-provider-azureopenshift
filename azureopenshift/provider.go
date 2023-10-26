@@ -42,6 +42,14 @@ func Provider() *schema.Provider {
 				DefaultFunc: schema.EnvDefaultFunc("ARM_TENANT_ID", ""),
 				Description: "The Tenant ID which should be used.",
 			},
+
+			"environment": {
+				Type:         schema.TypeString,
+				Required:     true,
+				DefaultFunc:  schema.EnvDefaultFunc("ARM_ENVIRONMENT", "public"),
+				Description:  "The Cloud Environment which should be used. Possible values are public, usgovernment, and china. Defaults to public.",
+				ValidateFunc: validation.StringInSlice([]string{auth.AzurePublicString, auth.AzureUSGovernmentString, auth.AzureChinaString}, false),
+			},
 		},
 
 		ResourcesMap: map[string]*schema.Resource{
@@ -59,12 +67,15 @@ func providerConfigure(p *schema.Provider) schema.ConfigureContextFunc {
 		if !ok {
 			stopCtx = ctx
 		}
+
 		config := auth.Config{
 			SubscriptionId: d.Get("subscription_id").(string),
 			TenantId:       d.Get("tenant_id").(string),
 			ClientSecret:   d.Get("client_secret").(string),
 			ClientId:       d.Get("client_id").(string),
+			Environment:    d.Get("environment").(string),
 		}
+
 		client, err := clients.NewClient(stopCtx, config)
 		if err != nil {
 			return nil, diag.Errorf("building AzureRM Client: %s", err)
