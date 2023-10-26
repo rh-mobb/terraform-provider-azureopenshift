@@ -64,7 +64,7 @@ func NewDefaultAroCredential(config Config) (*DefaultAroCredential, error) {
 		return nil, err
 	}
 
-	chain, err := azidentity.NewChainedTokenCredential([]azcore.TokenCredential{clientSecretCred, cliCred}, nil)
+	chain, err := azidentity.NewChainedTokenCredential(creds, nil)
 	if err != nil {
 		return cred, err
 	}
