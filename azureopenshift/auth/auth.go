@@ -39,9 +39,7 @@ func NewDefaultAroCredential(config Config) (*DefaultAroCredential, error) {
 	var errorMessages []string
 
 	options := &azidentity.ClientSecretCredentialOptions{
-		ClientOptions: azcore.ClientOptions{
-			Cloud: getCloud(config),
-		},
+		ClientOptions: GetOptions(config),
 	}
 
 	clientSecretCred, err := azidentity.NewClientSecretCredential(config.TenantId, config.ClientId, config.ClientSecret, options)
@@ -89,14 +87,14 @@ func defaultAroCredentialConstructorErrorHandler(numberOfSuccessfulCredentials i
 	return nil
 }
 
-func getCloud(config Config) cloud.Configuration {
+func GetOptions(config Config) policy.ClientOptions {
 	switch config.Environment {
 	// TODO: remove China support for now until ARO supports it.
 	// case AzureChinaString:
 	// 	return cloud.AzureChina
 	case AzureUSGovernmentString:
-		return cloud.AzureGovernment
+		return policy.ClientOptions{Cloud: cloud.AzureGovernment}
 	default:
-		return cloud.AzurePublic
+		return policy.ClientOptions{Cloud: cloud.AzurePublic}
 	}
 }

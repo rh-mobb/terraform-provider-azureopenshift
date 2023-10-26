@@ -3,7 +3,9 @@ package clients
 import (
 	"context"
 
+	armpolicy "github.com/Azure/azure-sdk-for-go/sdk/azcore/arm/policy"
 	redhatopenshift "github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/redhatopenshift/armredhatopenshift"
+
 	"github.com/rh-mobb/terraform-provider-azureopenshift/azureopenshift/auth"
 )
 
@@ -18,7 +20,11 @@ func NewClient(stopCtx context.Context, config auth.Config) (*Client, error) {
 	if err != nil {
 		return nil, err
 	}
-	openshiftClustersClient, err := redhatopenshift.NewOpenShiftClustersClient(config.SubscriptionId, cred, nil)
+
+	options := &armpolicy.ClientOptions{}
+	options.ClientOptions = auth.GetOptions(config)
+
+	openshiftClustersClient, err := redhatopenshift.NewOpenShiftClustersClient(config.SubscriptionId, cred, options)
 	if err != nil {
 		return nil, err
 	}
