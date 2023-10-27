@@ -79,7 +79,7 @@ func InternalClusterId(clusterName string, workerProfiles []*redhatopenshift.Wor
 		return nil, err
 	}
 	matches := rgx.FindStringSubmatch(*profile.Name)
-	if len(matches) != 3 {
+	if len(matches) != int(*profile.Count) {
 		return nil, fmt.Errorf("can not capture the internal cluster id with cluster name %s, profile worker name %s, matches: %v", clusterName, *profile.Name, matches)
 	}
 	return &matches[2], nil
