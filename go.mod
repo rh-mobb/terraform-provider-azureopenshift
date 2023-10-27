@@ -6,27 +6,29 @@ toolchain go1.21.3
 
 require (
 	// Tag on sdk/resourcemanager/redhatopenshift/armredhatopenshift/v1.3.0
-	github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/redhatopenshift/armredhatopenshift v1.4.0
-	github.com/Azure/go-autorest/autorest v0.11.29
-	github.com/hashicorp/go-azure-helpers v0.62.0
+	// NOTE: do not upgrade, this is a breaking change.
+	github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/redhatopenshift/armredhatopenshift v1.3.0
+	github.com/Azure/go-autorest/autorest v0.11.27
+	github.com/hashicorp/go-azure-helpers v0.33.0
 	github.com/hashicorp/terraform-plugin-sdk/v2 v2.29.0
 	github.com/onsi/ginkgo/v2 v2.13.0
 	github.com/onsi/gomega v1.29.0
 )
 
 require (
-	github.com/Azure/azure-sdk-for-go/sdk/azcore v1.8.0
-	github.com/Azure/azure-sdk-for-go/sdk/azidentity v1.4.0
+    // NOTE: do not upgrade, this is a breaking change.
+	github.com/Azure/azure-sdk-for-go/sdk/azcore v1.6.1
+	github.com/Azure/azure-sdk-for-go/sdk/azidentity v1.3.0
 )
 
 require (
-	github.com/Azure/azure-sdk-for-go/sdk/internal v1.4.0 // indirect
+	github.com/Azure/azure-sdk-for-go/sdk/internal v1.3.0 // indirect
 	github.com/Azure/go-autorest v14.2.0+incompatible // indirect
-	github.com/Azure/go-autorest/autorest/adal v0.9.23 // indirect
+	github.com/Azure/go-autorest/autorest/adal v0.9.18 // indirect
 	github.com/Azure/go-autorest/autorest/date v0.3.0 // indirect
 	github.com/Azure/go-autorest/logger v0.2.1 // indirect
 	github.com/Azure/go-autorest/tracing v0.6.0 // indirect
-	github.com/AzureAD/microsoft-authentication-library-for-go v1.2.0 // indirect
+	github.com/AzureAD/microsoft-authentication-library-for-go v1.1.1 // indirect
 	github.com/agext/levenshtein v1.2.3 // indirect
 	github.com/apparentlymart/go-textseg/v15 v15.0.0 // indirect
 	github.com/fatih/color v1.15.0 // indirect
