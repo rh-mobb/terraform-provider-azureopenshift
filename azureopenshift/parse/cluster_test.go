@@ -8,17 +8,55 @@ import (
 )
 
 func TestParseInternalClusterId(t *testing.T) {
-	captureClusterId("test-tf", "test-tf-2gk5b-worker-eastus21", t)
-	captureClusterId("test-tf-001", "test-tf-001-2gk5b-worker-eastus22", t)
-	captureClusterId("aro-001-xxxx-cp4i-dev-use2", "aro-001-xxxx-cp4i-dev-2gk5b-worker-eastus21", t)
+	captureClusterId(
+		"test-tf",
+		[]string{"test-tf-2gk5b-worker-eastus21"},
+		t,
+	)
+	captureClusterId(
+		"test-tf-001",
+		[]string{"test-tf-001-2gk5b-worker-eastus22"},
+		t,
+	)
+	captureClusterId(
+		"aro-001-xxxx-cp4i-dev-use2",
+		[]string{"aro-001-xxxx-cp4i-dev-2gk5b-worker-eastus21"},
+		t,
+	)
+	captureClusterId(
+		"test-tf",
+		[]string{
+			"test-tf-2gk5b-infra-eastus21",
+			"test-tf-2gk5b-worker-eastus21",
+		},
+		t,
+	)
+	captureClusterId(
+		"test-tf-001",
+		[]string{
+			"test-tf-001-2gk5b-infra-eastus22",
+			"test-tf-001-2gk5b-worker-eastus22",
+		},
+		t,
+	)
+	captureClusterId(
+		"aro-001-xxxx-cp4i-dev-use2",
+		[]string{
+			"aro-001-xxxx-cp4i-dev-2gk5b-infra-eastus21",
+			"aro-001-xxxx-cp4i-dev-2gk5b-worker-eastus21",
+		},
+		t,
+	)
 }
 
-func captureClusterId(clusterName, testString string, t *testing.T) {
-	workerProfiles := []*redhatopenshift.WorkerProfile{
-		{
-			Name: &testString,
-		},
+func captureClusterId(clusterName string, testString []string, t *testing.T) {
+	workerProfiles := make([]*redhatopenshift.WorkerProfile, 0)
+	for _, profile := range testString {
+		workerProfiles = append(workerProfiles, &redhatopenshift.WorkerProfile{
+			Name: &profile,
+		})
 	}
+
 	clusterId, err := parse.InternalClusterId(clusterName, workerProfiles)
 	if err != nil {
 		t.Errorf("can not get id with cluster name %s and work profile name %s: error %v", clusterName, testString, err)

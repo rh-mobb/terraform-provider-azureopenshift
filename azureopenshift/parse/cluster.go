@@ -66,21 +66,24 @@ func ClusterID(input string) (*ClusterId, error) {
 	return &resourceId, nil
 }
 
-//heack: we want to get load balancer name. But API does not expose that yet.
-
+// InternalClusterId uses a hack to get the load balancer name since the API does not expose that yet.
 func InternalClusterId(clusterName string, workerProfiles []*redhatopenshift.WorkerProfile) (*string, error) {
 	if len(workerProfiles) < 1 {
 		return nil, errors.New("need at least 1 worker profile to calculate internal cluster id")
 	}
-	profile := (workerProfiles)[0]
+
 	es := `(.+)-(.+?)-worker-.+`
 	rgx, err := regexp.Compile(es)
 	if err != nil {
 		return nil, err
 	}
-	matches := rgx.FindStringSubmatch(*profile.Name)
-	if len(matches) != 3 {
-		return nil, fmt.Errorf("can not capture the internal cluster id with cluster name %s, profile worker name %s, matches: %v", clusterName, *profile.Name, matches)
+
+	for _, profile := range workerProfiles {
+		matches := rgx.FindStringSubmatch(*profile.Name)
+		if len(matches) == 3 {
+			return &matches[2], nil
+		}
 	}
-	return &matches[2], nil
+
+	return nil, fmt.Errorf("can not capture the internal cluster id with cluster name %s, for any of the profiles", clusterName)
 }
