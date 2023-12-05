@@ -2,12 +2,12 @@ module github.com/rh-mobb/terraform-provider-azureopenshift
 
 go 1.21
 
-toolchain go1.21.3
+// toolchain go1.21.3
 
 require (
 	// Tag on sdk/resourcemanager/redhatopenshift/armredhatopenshift/v1.3.0
 	// NOTE: do not upgrade, this is a breaking change.
-	github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/redhatopenshift/armredhatopenshift v1.3.0
+	github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/redhatopenshift/armredhatopenshift v1.4.0
 	github.com/Azure/go-autorest/autorest v0.11.27
 	github.com/hashicorp/go-azure-helpers v0.33.0
 	github.com/hashicorp/terraform-plugin-sdk/v2 v2.29.0
@@ -16,9 +16,9 @@ require (
 )
 
 require (
-    // NOTE: do not upgrade, this is a breaking change.
-	github.com/Azure/azure-sdk-for-go/sdk/azcore v1.6.1
-	github.com/Azure/azure-sdk-for-go/sdk/azidentity v1.3.0
+	// NOTE: do not upgrade, this is a breaking change.
+	github.com/Azure/azure-sdk-for-go/sdk/azcore v1.8.0
+	github.com/Azure/azure-sdk-for-go/sdk/azidentity v1.4.0
 )
 
 require (

@@ -204,12 +204,6 @@ func resourceOpenShiftCluster() *schema.Resource {
 				Sensitive: true,
 			},
 
-			"internal_cluster_id": {
-				Type:     schema.TypeString,
-				Computed: true,
-				Optional: true,
-			},
-
 			"worker_profile": {
 				Type:     schema.TypeList,
 				Required: true,
@@ -514,13 +508,6 @@ func resourceOpenShiftClusterRead(d *schema.ResourceData, meta interface{}) erro
 			return fmt.Errorf("setting `worker_profile`: %+v", err)
 		}
 
-		internalClusterId, err := parse.InternalClusterId(*resp.Name, props.WorkerProfiles)
-		if err != nil {
-			return err
-		}
-
-		d.Set("internal_cluster_id", internalClusterId)
-
 		apiServerProfile := flattenOpenShiftAPIServerProfile(props.ApiserverProfile)
 		if err := d.Set("api_server_profile", apiServerProfile); err != nil {
 			return fmt.Errorf("setting `api_server_profile`: %+v", err)
@@ -700,14 +687,16 @@ func flattenOpenShiftMasterProfile(profile *redhatopenshift.MasterProfile) []int
 }
 
 func flattenOpenShiftWorkerProfiles(profiles []*redhatopenshift.WorkerProfile) []interface{} {
-	if profiles == nil {
+
+	// Expect the default worker profile only has one item
+	if profiles == nil || len(profiles) != 1 {
 		return []interface{}{}
 	}
 
 	results := make([]interface{}, 0)
 
 	result := make(map[string]interface{})
-	result["node_count"] = int32(len(profiles))
+	result["node_count"] = profiles[0].Count
 
 	for _, profile := range profiles {
 		if result["disk_size_gb"] == nil && profile.DiskSizeGB != nil {

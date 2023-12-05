@@ -30,7 +30,6 @@ description: |-
 - `cluster_profile` (Block List, Max: 1) (see [below for nested schema](#nestedblock--cluster_profile))
 - `cluster_resource_group` (String) (Name for the managed resources' RG. OpenShift will create this RG)
 - `ingress_profile` (Block List, Max: 1) (see [below for nested schema](#nestedblock--ingress_profile))
-- `internal_cluster_id` (String) (5-digit string appended to resources inside the managed Resource Group)
 - `kubeadmin_password` (String, Sensitive)
 - `kubeadmin_username` (String, Sensitive)
 - `network_profile` (Block List, Max: 1) (see [below for nested schema](#nestedblock--network_profile))
