@@ -10,6 +10,9 @@ description: "This is a provider to create Azure Redhat Openshift"
 
 This is a provider to create [Azure Redhat Openshift](https://docs.microsoft.com/en-us/azure/openshift/)
 
+> **WARN:** Please note that this provider is now considered deprecated in favor of 
+https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/redhat_openshift_cluster.
+
 
 ## Prerequistes
 
