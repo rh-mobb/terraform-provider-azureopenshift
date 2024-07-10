@@ -8,7 +8,8 @@ description: |-
 
 # azureopenshift_redhatopenshift_cluster (Resource)
 
-
+> **WARN:** Please note that this provider is now considered deprecated in favor of 
+https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/redhat_openshift_cluster.
 
 
 

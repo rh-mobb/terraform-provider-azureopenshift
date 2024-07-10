@@ -34,6 +34,11 @@ const (
 
 func resourceOpenShiftCluster() *schema.Resource {
 	return &schema.Resource{
+		DeprecationMessage: "The 'azureopenshift_redhatopenshift_cluster' resource is deprecated.  Please use " +
+			"'azurerm_redhat_openshift_cluster' instead as this resource is no longer maintained.  See " +
+			"https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/redhat_openshift_cluster " +
+			"for more details.",
+
 		Create: resourceOpenShiftClusterCreate,
 		Read:   resourceOpenShiftClusterRead,
 		Update: resourceOpenShiftClusterUpdate,
